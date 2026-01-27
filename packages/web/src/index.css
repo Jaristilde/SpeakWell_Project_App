@@ -1,0 +1,105 @@
+@import "tailwindcss";
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+  --cosmic-blue: #0B4CDC;
+  --cosmic-blue-dark: #0839A8;
+  --cosmic-blue-light: #3D6FE8;
+  --teal: #06B6D4;
+  --emerald: #10B981;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #F8FAFC;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/* Button styles */
+.btn-primary {
+  background: linear-gradient(to right, #0B4CDC, #0839A8);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  transition: all 0.2s;
+  box-shadow: 0 10px 15px -3px rgba(11, 76, 220, 0.3);
+}
+
+.btn-primary:hover {
+  background: linear-gradient(to right, #0839A8, #062875);
+  transform: translateY(-2px);
+  box-shadow: 0 20px 25px -5px rgba(11, 76, 220, 0.3);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-secondary {
+  background: white;
+  color: #0B4CDC;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  border: 2px solid #0B4CDC;
+  transition: all 0.2s;
+}
+
+.btn-secondary:hover {
+  background: #0B4CDC;
+  color: white;
+}
+
+.btn-ghost {
+  background: transparent;
+  color: #0B4CDC;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.btn-ghost:hover {
+  background: rgba(11, 76, 220, 0.1);
+}
+
+/* Safe area inset for mobile devices */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Touch handling for mobile navigation */
+.touch-manipulation {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Recording pulse animation */
+@keyframes pulse-recording {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 0.7;
+  }
+}
+
+.animate-pulse-recording {
+  animation: pulse-recording 1s ease-in-out infinite;
+}

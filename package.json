@@ -1,0 +1,23 @@
+{
+  "name": "speakwell-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "SpeakWell Communication Skills App - Monorepo",
+  "scripts": {
+    "dev:web": "pnpm --filter @speakwell/web dev",
+    "dev:mobile": "pnpm --filter @speakwell/mobile start",
+    "dev:api": "pnpm --filter @speakwell/api start:dev",
+    "build:web": "pnpm --filter @speakwell/web build",
+    "build:mobile": "pnpm --filter @speakwell/mobile build",
+    "build:api": "pnpm --filter @speakwell/api build",
+    "test": "pnpm -r test",
+    "lint": "pnpm -r lint"
+  },
+  "keywords": ["speakwell", "communication", "learning", "mobile", "web"],
+  "author": "Joane Aristilde",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  }
+}
