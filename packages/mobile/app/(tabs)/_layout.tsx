@@ -1,16 +1,32 @@
 import { Tabs } from 'expo-router';
 import { View, StyleSheet } from 'react-native';
-import { Colors } from '../../src/constants/colors';
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Colors, BorderRadius } from '../../src/constants/colors';
 
-function TabIcon({ focused, icon }: { focused: boolean; icon: string }) {
+type IconName = keyof typeof Ionicons.glyphMap;
+
+interface TabIconProps {
+  focused: boolean;
+  icon: IconName;
+  iconFocused: IconName;
+}
+
+function TabIcon({ focused, icon, iconFocused }: TabIconProps) {
+  if (focused) {
+    return (
+      <LinearGradient
+        colors={Colors.gradient.primary as [string, string]}
+        style={styles.iconContainerFocused}
+      >
+        <Ionicons name={iconFocused} size={22} color={Colors.neutral.white} />
+      </LinearGradient>
+    );
+  }
+
   return (
-    <View
-      style={[
-        styles.iconContainer,
-        focused && styles.iconContainerFocused,
-      ]}
-    >
-      <View style={[styles.icon, focused && styles.iconFocused]} />
+    <View style={styles.iconContainer}>
+      <Ionicons name={icon} size={22} color={Colors.text.muted} />
     </View>
   );
 }
@@ -20,38 +36,47 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: Colors.primary.deepIndigo,
-        tabBarInactiveTintColor: Colors.neutral.gray400,
+        tabBarActiveTintColor: Colors.primary.purple,
+        tabBarInactiveTintColor: Colors.text.muted,
         tabBarStyle: styles.tabBar,
         tabBarLabelStyle: styles.tabLabel,
+        tabBarShowLabel: true,
       }}
     >
       <Tabs.Screen
         name="home"
         options={{
           title: 'Home',
-          tabBarIcon: ({ focused }) => <TabIcon focused={focused} icon="home" />,
+          tabBarIcon: ({ focused }) => (
+            <TabIcon focused={focused} icon="home-outline" iconFocused="home" />
+          ),
         }}
       />
       <Tabs.Screen
         name="learn"
         options={{
           title: 'Learn',
-          tabBarIcon: ({ focused }) => <TabIcon focused={focused} icon="book" />,
+          tabBarIcon: ({ focused }) => (
+            <TabIcon focused={focused} icon="book-outline" iconFocused="book" />
+          ),
         }}
       />
       <Tabs.Screen
         name="practice"
         options={{
           title: 'Practice',
-          tabBarIcon: ({ focused }) => <TabIcon focused={focused} icon="mic" />,
+          tabBarIcon: ({ focused }) => (
+            <TabIcon focused={focused} icon="mic-outline" iconFocused="mic" />
+          ),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: 'Profile',
-          tabBarIcon: ({ focused }) => <TabIcon focused={focused} icon="user" />,
+          tabBarIcon: ({ focused }) => (
+            <TabIcon focused={focused} icon="person-outline" iconFocused="person" />
+          ),
         }}
       />
     </Tabs>
@@ -60,31 +85,31 @@ export default function TabsLayout() {
 
 const styles = StyleSheet.create({
   tabBar: {
-    backgroundColor: Colors.neutral.white,
+    backgroundColor: Colors.background.secondary,
     borderTopWidth: 1,
-    borderTopColor: Colors.neutral.gray200,
+    borderTopColor: Colors.border.muted,
     paddingTop: 8,
     paddingBottom: 8,
-    height: 60,
+    height: 70,
+    paddingHorizontal: 8,
   },
   tabLabel: {
     fontSize: 12,
     fontWeight: '500',
+    marginTop: 4,
   },
   iconContainer: {
-    width: 24,
-    height: 24,
+    width: 40,
+    height: 40,
     justifyContent: 'center',
     alignItems: 'center',
+    borderRadius: 20,
   },
-  iconContainerFocused: {},
-  icon: {
-    width: 20,
-    height: 20,
-    borderRadius: 4,
-    backgroundColor: Colors.neutral.gray400,
-  },
-  iconFocused: {
-    backgroundColor: Colors.primary.deepIndigo,
+  iconContainerFocused: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 20,
   },
 });

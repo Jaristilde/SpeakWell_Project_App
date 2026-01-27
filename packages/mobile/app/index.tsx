@@ -1,5 +1,6 @@
 import { Redirect } from 'expo-router';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useAuthStore } from '../src/store/authStore';
 import { Colors } from '../src/constants/colors';
 
@@ -8,9 +9,12 @@ export default function Index() {
 
   if (isLoading) {
     return (
-      <View style={styles.container}>
-        <ActivityIndicator size="large" color={Colors.primary.deepIndigo} />
-      </View>
+      <LinearGradient
+        colors={[Colors.background.primary, Colors.background.secondary]}
+        style={styles.container}
+      >
+        <ActivityIndicator size="large" color={Colors.primary.purple} />
+      </LinearGradient>
     );
   }
 
@@ -19,7 +23,7 @@ export default function Index() {
   }
 
   if (user && !user.onboardingCompleted) {
-    return <Redirect href="/onboarding/age-group" />;
+    return <Redirect href="/onboarding/welcome" />;
   }
 
   return <Redirect href="/(tabs)/home" />;
@@ -30,6 +34,5 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: Colors.background.primary,
   },
 });

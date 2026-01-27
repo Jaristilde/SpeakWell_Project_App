@@ -3,15 +3,28 @@ import { Text as RNText, StyleSheet, TextStyle, TextProps } from 'react-native';
 import { Colors, FontSizes } from '../../constants/colors';
 
 interface CustomTextProps extends TextProps {
-  variant?: 'h1' | 'h2' | 'h3' | 'body' | 'bodySmall' | 'caption';
-  color?: keyof typeof Colors.neutral | keyof typeof Colors.primary;
+  variant?: 'display' | 'h1' | 'h2' | 'h3' | 'body' | 'bodySmall' | 'caption' | 'label';
+  color?: 'primary' | 'secondary' | 'muted' | 'accent' | 'white' | 'purple' | 'blue' | 'success' | 'error' | 'warning';
   weight?: 'normal' | 'medium' | 'semibold' | 'bold';
   align?: 'left' | 'center' | 'right';
 }
 
+const colorMap: Record<string, string> = {
+  primary: Colors.text.primary,      // White
+  secondary: Colors.text.secondary,  // Light purple/blue
+  muted: Colors.text.muted,          // Gray
+  accent: Colors.text.accent,        // Light violet
+  white: Colors.neutral.white,
+  purple: Colors.primary.purple,
+  blue: Colors.primary.blue,
+  success: Colors.semantic.success,
+  error: Colors.semantic.error,
+  warning: Colors.semantic.warning,
+};
+
 export const Text: React.FC<CustomTextProps> = ({
   variant = 'body',
-  color,
+  color = 'primary',
   weight,
   align,
   style,
@@ -23,16 +36,8 @@ export const Text: React.FC<CustomTextProps> = ({
     styles[variant],
     weight && styles[weight],
     align && { textAlign: align },
+    { color: colorMap[color] || Colors.text.primary },
   ];
-
-  if (color) {
-    const colorValue =
-      (Colors.neutral as Record<string, string>)[color] ||
-      (Colors.primary as Record<string, string>)[color];
-    if (colorValue) {
-      textStyles.push({ color: colorValue });
-    }
-  }
 
   if (style) {
     textStyles.push(style as TextStyle);
@@ -47,12 +52,19 @@ export const Text: React.FC<CustomTextProps> = ({
 
 const styles = StyleSheet.create({
   base: {
-    color: Colors.neutral.charcoal,
+    color: Colors.text.primary, // White by default for dark theme
+  },
+  display: {
+    fontSize: FontSizes.display,
+    fontWeight: '700',
+    lineHeight: FontSizes.display * 1.1,
+    letterSpacing: -1,
   },
   h1: {
     fontSize: FontSizes.xxxl,
     fontWeight: '700',
     lineHeight: FontSizes.xxxl * 1.2,
+    letterSpacing: -0.5,
   },
   h2: {
     fontSize: FontSizes.xxl,
@@ -78,6 +90,13 @@ const styles = StyleSheet.create({
     fontSize: FontSizes.xs,
     fontWeight: '400',
     lineHeight: FontSizes.xs * 1.4,
+  },
+  label: {
+    fontSize: FontSizes.sm,
+    fontWeight: '600',
+    lineHeight: FontSizes.sm * 1.4,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   normal: {
     fontWeight: '400',

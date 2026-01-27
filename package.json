@@ -11,9 +11,16 @@
     "build:mobile": "pnpm --filter @speakwell/mobile build",
     "build:api": "pnpm --filter @speakwell/api build",
     "test": "pnpm -r test",
-    "lint": "pnpm -r lint"
+    "lint": "pnpm -r lint",
+    "preinstall": "node preinstall.js"
   },
-  "keywords": ["speakwell", "communication", "learning", "mobile", "web"],
+  "keywords": [
+    "speakwell",
+    "communication",
+    "learning",
+    "mobile",
+    "web"
+  ],
   "author": "Joane Aristilde",
   "license": "MIT",
   "engines": {

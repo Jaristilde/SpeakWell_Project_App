@@ -1,11 +1,12 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, StyleSheet, TouchableOpacity, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, router } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { Audio } from 'expo-av';
-import { Text } from '../../../src/components/ui/Text';
-import { Button } from '../../../src/components/ui/Button';
-import { Colors, Spacing } from '../../../src/constants/colors';
+import { Text, Button, Card } from '../../../src/components/ui';
+import { Colors, Spacing, BorderRadius, Shadows } from '../../../src/constants/colors';
 
 const PRACTICE_PROMPTS: Record<string, { title: string; description: string; duration: number }> = {
   '1': { title: 'Self Introduction', description: 'Introduce yourself in 30 seconds', duration: 30 },
@@ -15,28 +16,22 @@ const PRACTICE_PROMPTS: Record<string, { title: string; description: string; dur
 };
 
 export default function RecordScreen() {
-  const router = useRouter();
   const { promptId } = useLocalSearchParams<{ promptId: string }>();
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [recording, setRecording] = useState<Audio.Recording | null>(null);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pulseAnim = useRef(new Animated.Value(1)).current;
+  const waveformAnims = useRef([...Array(20)].map(() => new Animated.Value(0.3))).current;
 
   const prompt = PRACTICE_PROMPTS[promptId || '1'] || PRACTICE_PROMPTS['1'];
 
   useEffect(() => {
     requestPermissions();
-
     return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
-      // Clean up recording if component unmounts
-      if (recording) {
-        recording.stopAndUnloadAsync();
-      }
+      if (timerRef.current) clearInterval(timerRef.current);
+      if (recording) recording.stopAndUnloadAsync();
     };
   }, []);
 
@@ -45,91 +40,77 @@ export default function RecordScreen() {
     if (isRecording) {
       const pulse = Animated.loop(
         Animated.sequence([
-          Animated.timing(pulseAnim, {
-            toValue: 1.3,
-            duration: 500,
-            useNativeDriver: true,
-          }),
-          Animated.timing(pulseAnim, {
-            toValue: 1,
-            duration: 500,
-            useNativeDriver: true,
-          }),
+          Animated.timing(pulseAnim, { toValue: 1.3, duration: 500, useNativeDriver: true }),
+          Animated.timing(pulseAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
         ])
       );
       pulse.start();
-      return () => pulse.stop();
+
+      // Waveform animation
+      const waveAnimations = waveformAnims.map((anim, i) =>
+        Animated.loop(
+          Animated.sequence([
+            Animated.timing(anim, {
+              toValue: 0.3 + Math.random() * 0.7,
+              duration: 200 + Math.random() * 300,
+              useNativeDriver: true,
+            }),
+            Animated.timing(anim, {
+              toValue: 0.3,
+              duration: 200 + Math.random() * 300,
+              useNativeDriver: true,
+            }),
+          ])
+        )
+      );
+      waveAnimations.forEach(a => a.start());
+
+      return () => {
+        pulse.stop();
+        waveAnimations.forEach(a => a.stop());
+      };
     }
-  }, [isRecording, pulseAnim]);
+  }, [isRecording]);
 
   const requestPermissions = async () => {
     try {
       const { granted } = await Audio.requestPermissionsAsync();
       setHasPermission(granted);
-
       if (granted) {
-        await Audio.setAudioModeAsync({
-          allowsRecordingIOS: true,
-          playsInSilentModeIOS: true,
-        });
+        await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
       }
     } catch (error) {
-      console.error('Error requesting permissions:', error);
       setHasPermission(false);
     }
   };
 
   const startRecording = async () => {
     try {
-      // Create a new recording
       const { recording: newRecording } = await Audio.Recording.createAsync(
         Audio.RecordingOptionsPresets.HIGH_QUALITY
       );
-
       setRecording(newRecording);
       setIsRecording(true);
       setRecordingTime(0);
-
-      // Start timer
-      timerRef.current = setInterval(() => {
-        setRecordingTime((prev) => prev + 1);
-      }, 1000);
+      timerRef.current = setInterval(() => setRecordingTime((prev) => prev + 1), 1000);
     } catch (error) {
       console.error('Failed to start recording:', error);
-      alert('Failed to start recording. Please try again.');
     }
   };
 
   const stopRecording = async () => {
     if (!recording) return;
-
     try {
       setIsRecording(false);
-
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
-
-      // Stop the recording
+      if (timerRef.current) clearInterval(timerRef.current);
       await recording.stopAndUnloadAsync();
-
-      // Get the recording URI
       const uri = recording.getURI();
-      console.log('Recording saved at:', uri);
-
-      // Navigate to feedback screen
       router.replace({
         pathname: '/(tabs)/practice/feedback',
-        params: {
-          duration: recordingTime.toString(),
-          promptId: promptId || '1',
-          promptTitle: prompt.title,
-          audioUri: uri || '',
-        },
+        params: { duration: recordingTime.toString(), promptId: promptId || '1', promptTitle: prompt.title, audioUri: uri || '' },
       });
     } catch (error) {
       console.error('Failed to stop recording:', error);
-      alert('Failed to save recording. Please try again.');
     }
   };
 
@@ -141,153 +122,143 @@ export default function RecordScreen() {
 
   const handleCancel = async () => {
     if (recording && isRecording) {
-      try {
-        await recording.stopAndUnloadAsync();
-      } catch (error) {
-        console.error('Error stopping recording:', error);
-      }
+      try { await recording.stopAndUnloadAsync(); } catch {}
     }
     router.back();
   };
 
-  // Permission loading state
   if (hasPermission === null) {
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.permissionContainer}>
-          <Text variant="body">Loading...</Text>
-        </View>
-      </SafeAreaView>
+      <View style={styles.container}>
+        <SafeAreaView style={styles.safeArea}>
+          <View style={styles.permissionContainer}>
+            <Text variant="body" color="secondary">Loading...</Text>
+          </View>
+        </SafeAreaView>
+      </View>
     );
   }
 
-  // Permission denied state
   if (!hasPermission) {
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.permissionContainer}>
-          <View style={styles.permissionIcon}>
-            <Text style={styles.permissionIconText}>🎤</Text>
+      <View style={styles.container}>
+        <SafeAreaView style={styles.safeArea}>
+          <View style={styles.permissionContainer}>
+            <View style={styles.permissionIcon}>
+              <Ionicons name="mic-off" size={40} color={Colors.primary.purple} />
+            </View>
+            <Text variant="h3" align="center">Microphone Access Required</Text>
+            <Text variant="body" color="secondary" align="center" style={styles.permissionText}>
+              To practice speaking, we need access to your microphone.
+            </Text>
+            <Button title="Grant Permission" variant="gradient" onPress={requestPermissions} size="lg" />
+            <Button title="Go Back" variant="ghost" onPress={() => router.back()} size="md" />
           </View>
-          <Text variant="h3" align="center">
-            Microphone Access Required
-          </Text>
-          <Text variant="body" color="gray600" align="center" style={styles.permissionText}>
-            To practice speaking, we need access to your microphone. Please enable it in your device settings.
-          </Text>
-          <Button
-            title="Grant Permission"
-            onPress={requestPermissions}
-            size="lg"
-          />
-          <Button
-            title="Go Back"
-            onPress={() => router.back()}
-            variant="ghost"
-            size="md"
-          />
-        </View>
-      </SafeAreaView>
+        </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
-          <Text variant="body" color="deepIndigo" weight="semibold">
-            Cancel
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.content}>
-        {/* Prompt display */}
-        <View style={styles.promptCard}>
-          <Text variant="caption" color="gray600" align="center">
-            YOUR PROMPT
-          </Text>
-          <Text variant="h2" align="center" style={styles.promptTitle}>
-            {prompt.title}
-          </Text>
-          <Text variant="body" color="gray600" align="center">
-            {prompt.description}
-          </Text>
+    <View style={styles.container}>
+      <SafeAreaView style={styles.safeArea}>
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
+            <Ionicons name="close" size={24} color={Colors.text.primary} />
+          </TouchableOpacity>
+          <Text variant="body" weight="semibold">Recording</Text>
+          <View style={{ width: 44 }} />
         </View>
 
-        {/* Timer */}
-        <View style={styles.timerContainer}>
-          {isRecording && (
-            <Animated.View
-              style={[
-                styles.recordingIndicator,
-                { transform: [{ scale: pulseAnim }] },
-              ]}
-            />
-          )}
-          <Text variant="h1" style={styles.timerText}>
-            {formatTime(recordingTime)}
-          </Text>
-          <Text variant="caption" color="gray600">
-            {isRecording ? 'Recording...' : 'Ready to record'}
-          </Text>
-        </View>
+        <View style={styles.content}>
+          {/* Prompt Card */}
+          <Card variant="gradient" padding="lg" style={styles.promptCard}>
+            <Text variant="label" color="accent" align="center">YOUR PROMPT</Text>
+            <Text variant="h2" align="center" style={styles.promptTitle}>{prompt.title}</Text>
+            <Text variant="body" color="secondary" align="center">{prompt.description}</Text>
+          </Card>
 
-        {/* Waveform placeholder */}
-        {isRecording && (
-          <View style={styles.waveformContainer}>
-            {[...Array(20)].map((_, i) => (
-              <Animated.View
-                key={i}
-                style={[
-                  styles.waveformBar,
-                  {
-                    height: 10 + Math.random() * 40,
-                    opacity: 0.3 + Math.random() * 0.7,
-                  },
-                ]}
-              />
-            ))}
+          {/* Timer */}
+          <View style={styles.timerContainer}>
+            {isRecording && (
+              <Animated.View style={[styles.recordingIndicator, { transform: [{ scale: pulseAnim }] }]}>
+                <View style={styles.recordingDot} />
+              </Animated.View>
+            )}
+            <Text variant="display" style={styles.timerText}>{formatTime(recordingTime)}</Text>
+            <Text variant="bodySmall" color="muted">
+              {isRecording ? 'Recording...' : 'Ready to record'}
+            </Text>
           </View>
-        )}
-      </View>
 
-      <View style={styles.footer}>
-        <TouchableOpacity
-          style={[
-            styles.recordButton,
-            isRecording && styles.recordButtonRecording,
-          ]}
-          onPress={isRecording ? stopRecording : startRecording}
-          activeOpacity={0.8}
-        >
-          <View
-            style={[
-              styles.recordButtonInner,
-              isRecording && styles.recordButtonInnerRecording,
-            ]}
-          />
-        </TouchableOpacity>
-        <Text variant="body" color="gray600" align="center" style={styles.hint}>
-          {isRecording ? 'Tap to stop recording' : 'Tap to start recording'}
-        </Text>
-      </View>
-    </SafeAreaView>
+          {/* Waveform */}
+          {isRecording && (
+            <View style={styles.waveformContainer}>
+              {waveformAnims.map((anim, i) => (
+                <Animated.View
+                  key={i}
+                  style={[
+                    styles.waveformBar,
+                    { transform: [{ scaleY: anim }] },
+                  ]}
+                />
+              ))}
+            </View>
+          )}
+        </View>
+
+        {/* Footer with Record Button */}
+        <View style={styles.footer}>
+          <TouchableOpacity
+            style={styles.recordButtonContainer}
+            onPress={isRecording ? stopRecording : startRecording}
+            activeOpacity={0.8}
+          >
+            <LinearGradient
+              colors={isRecording ? [Colors.semantic.error, '#DC2626'] : Colors.gradient.primary as [string, string]}
+              style={styles.recordButtonOuter}
+            >
+              <View style={[styles.recordButtonInner, isRecording && styles.recordButtonInnerRecording]}>
+                {isRecording ? (
+                  <Ionicons name="stop" size={32} color={Colors.neutral.white} />
+                ) : (
+                  <Ionicons name="mic" size={32} color={Colors.neutral.white} />
+                )}
+              </View>
+            </LinearGradient>
+          </TouchableOpacity>
+          <Text variant="bodySmall" color="muted" align="center" style={styles.hint}>
+            {isRecording ? 'Tap to stop recording' : 'Tap to start recording'}
+          </Text>
+        </View>
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.neutral.white,
+    backgroundColor: Colors.background.primary,
+  },
+  safeArea: {
+    flex: 1,
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'flex-start',
-    padding: Spacing.lg,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
   },
   cancelButton: {
-    padding: Spacing.sm,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: Colors.background.secondary,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   content: {
     flex: 1,
@@ -296,12 +267,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xl,
   },
   promptCard: {
-    backgroundColor: Colors.neutral.gray100,
-    padding: Spacing.xl,
-    borderRadius: 16,
     width: '100%',
     marginBottom: Spacing.xxl,
-    gap: Spacing.sm,
   },
   promptTitle: {
     marginVertical: Spacing.sm,
@@ -312,16 +279,24 @@ const styles = StyleSheet.create({
   },
   recordingIndicator: {
     position: 'absolute',
-    top: -40,
-    width: 16,
-    height: 16,
-    borderRadius: 8,
+    top: -30,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: `${Colors.semantic.error}30`,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  recordingDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
     backgroundColor: Colors.semantic.error,
   },
   timerText: {
     fontSize: 72,
     fontWeight: '200',
-    color: Colors.neutral.charcoal,
+    color: Colors.text.primary,
     fontVariant: ['tabular-nums'],
   },
   waveformContainer: {
@@ -329,11 +304,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     height: 60,
-    gap: 3,
+    gap: 4,
   },
   waveformBar: {
     width: 4,
-    backgroundColor: Colors.primary.deepIndigo,
+    height: 40,
+    backgroundColor: Colors.primary.purple,
     borderRadius: 2,
   },
   footer: {
@@ -341,30 +317,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.md,
   },
-  recordButton: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: 'transparent',
-    borderWidth: 4,
-    borderColor: Colors.primary.deepIndigo,
-    justifyContent: 'center',
-    alignItems: 'center',
+  recordButtonContainer: {
+    ...Shadows.glow,
   },
-  recordButtonRecording: {
-    borderColor: Colors.semantic.error,
+  recordButtonOuter: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   recordButtonInner: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: Colors.primary.deepIndigo,
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   recordButtonInnerRecording: {
-    width: 30,
-    height: 30,
-    borderRadius: 6,
-    backgroundColor: Colors.semantic.error,
+    backgroundColor: 'rgba(255,255,255,0.3)',
   },
   hint: {
     marginTop: Spacing.sm,
@@ -380,13 +352,10 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: Colors.neutral.gray100,
+    backgroundColor: `${Colors.primary.purple}20`,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: Spacing.md,
-  },
-  permissionIconText: {
-    fontSize: 40,
   },
   permissionText: {
     marginBottom: Spacing.lg,

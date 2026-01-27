@@ -6,18 +6,22 @@ import {
   ActivityIndicator,
   ViewStyle,
   TextStyle,
+  View,
 } from 'react-native';
-import { Colors, Spacing, FontSizes } from '../../constants/colors';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Colors, Spacing, FontSizes, BorderRadius, Shadows } from '../../constants/colors';
 
 interface ButtonProps {
   title: string;
   onPress: () => void;
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'gradient';
   size?: 'sm' | 'md' | 'lg';
   disabled?: boolean;
   loading?: boolean;
   style?: ViewStyle;
   textStyle?: TextStyle;
+  icon?: React.ReactNode;
+  iconPosition?: 'left' | 'right';
 }
 
 export const Button: React.FC<ButtonProps> = ({
@@ -29,21 +33,76 @@ export const Button: React.FC<ButtonProps> = ({
   loading = false,
   style,
   textStyle,
+  icon,
+  iconPosition = 'left',
 }) => {
+  const sizeStyles = {
+    sm: styles.smSize,
+    md: styles.mdSize,
+    lg: styles.lgSize,
+  };
+
+  const textSizeStyles = {
+    sm: styles.smText,
+    md: styles.mdText,
+    lg: styles.lgText,
+  };
+
+  const renderContent = () => {
+    if (loading) {
+      return (
+        <ActivityIndicator
+          color={variant === 'outline' || variant === 'ghost' ? Colors.primary.purple : Colors.neutral.white}
+        />
+      );
+    }
+
+    return (
+      <View style={styles.contentContainer}>
+        {icon && iconPosition === 'left' && <View style={styles.iconLeft}>{icon}</View>}
+        <Text style={[
+          styles.text,
+          styles[`${variant}Text`],
+          textSizeStyles[size],
+          disabled && styles.disabledText,
+          textStyle,
+        ]}>
+          {title}
+        </Text>
+        {icon && iconPosition === 'right' && <View style={styles.iconRight}>{icon}</View>}
+      </View>
+    );
+  };
+
+  // Gradient button variant
+  if (variant === 'gradient') {
+    return (
+      <TouchableOpacity
+        onPress={onPress}
+        disabled={disabled || loading}
+        activeOpacity={0.8}
+        style={[disabled && styles.disabled, style]}
+      >
+        <LinearGradient
+          colors={Colors.gradient.primary as [string, string]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={[styles.base, sizeStyles[size], Shadows.lg]}
+        >
+          {renderContent()}
+        </LinearGradient>
+      </TouchableOpacity>
+    );
+  }
+
+  // Standard button variants
   const buttonStyles = [
     styles.base,
     styles[variant],
-    styles[`${size}Size`],
+    sizeStyles[size],
+    variant === 'primary' && Shadows.md,
     disabled && styles.disabled,
     style,
-  ];
-
-  const textStyles = [
-    styles.text,
-    styles[`${variant}Text`],
-    styles[`${size}Text`],
-    disabled && styles.disabledText,
-    textStyle,
   ];
 
   return (
@@ -53,54 +112,69 @@ export const Button: React.FC<ButtonProps> = ({
       disabled={disabled || loading}
       activeOpacity={0.8}
     >
-      {loading ? (
-        <ActivityIndicator
-          color={variant === 'primary' ? Colors.neutral.white : Colors.primary.deepIndigo}
-        />
-      ) : (
-        <Text style={textStyles}>{title}</Text>
-      )}
+      {renderContent()}
     </TouchableOpacity>
   );
 };
 
 const styles = StyleSheet.create({
   base: {
-    borderRadius: 12,
+    borderRadius: BorderRadius.md,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  contentContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconLeft: {
+    marginRight: Spacing.sm,
+  },
+  iconRight: {
+    marginLeft: Spacing.sm,
+  },
+  // Variant styles - using Purple/Blue theme
   primary: {
-    backgroundColor: Colors.primary.deepIndigo,
+    backgroundColor: Colors.primary.blue, // #3B82F6
   },
   secondary: {
-    backgroundColor: Colors.primary.deepTeal,
+    backgroundColor: Colors.primary.purple, // #8B5CF6
   },
   outline: {
     backgroundColor: 'transparent',
     borderWidth: 2,
-    borderColor: Colors.primary.deepIndigo,
+    borderColor: Colors.primary.purple,
   },
   ghost: {
     backgroundColor: 'transparent',
   },
+  gradient: {
+    // Handled separately with LinearGradient
+  },
+  // Size styles
   smSize: {
     paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing.md,
+    minHeight: 36,
   },
   mdSize: {
     paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.lg,
+    minHeight: 48,
   },
   lgSize: {
     paddingVertical: Spacing.lg,
     paddingHorizontal: Spacing.xl,
+    minHeight: 56,
   },
   disabled: {
     opacity: 0.5,
   },
+  // Text styles
   text: {
     fontWeight: '600',
+    textAlign: 'center',
   },
   primaryText: {
     color: Colors.neutral.white,
@@ -109,10 +183,13 @@ const styles = StyleSheet.create({
     color: Colors.neutral.white,
   },
   outlineText: {
-    color: Colors.primary.deepIndigo,
+    color: Colors.primary.purple,
   },
   ghostText: {
-    color: Colors.primary.deepIndigo,
+    color: Colors.text.secondary, // Light purple/blue
+  },
+  gradientText: {
+    color: Colors.neutral.white,
   },
   smText: {
     fontSize: FontSizes.sm,
