@@ -7,7 +7,7 @@ import {
   TextInputProps,
   TouchableOpacity,
 } from 'react-native';
-import { Colors, Spacing, FontSizes } from '../../constants/colors';
+import { Colors, Spacing, FontSizes, BorderRadius } from '../../constants/colors';
 
 interface InputProps extends TextInputProps {
   label?: string;
@@ -41,7 +41,7 @@ export const Input: React.FC<InputProps> = ({
         {leftIcon && <View style={styles.iconLeft}>{leftIcon}</View>}
         <TextInput
           style={[styles.input, style]}
-          placeholderTextColor={Colors.neutral.gray400}
+          placeholderTextColor={Colors.text.muted}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           {...props}
@@ -68,20 +68,20 @@ const styles = StyleSheet.create({
   label: {
     fontSize: FontSizes.sm,
     fontWeight: '600',
-    color: Colors.neutral.charcoal,
-    marginBottom: Spacing.xs,
+    color: Colors.text.secondary, // Light purple/blue for dark theme
+    marginBottom: Spacing.sm,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.neutral.gray100,
-    borderRadius: 12,
+    backgroundColor: Colors.background.secondary, // Dark card background
+    borderRadius: BorderRadius.md,
     borderWidth: 2,
-    borderColor: 'transparent',
+    borderColor: Colors.border.muted,
   },
   focused: {
-    borderColor: Colors.primary.deepIndigo,
-    backgroundColor: Colors.neutral.white,
+    borderColor: Colors.primary.purple, // Purple border when focused
+    backgroundColor: Colors.background.tertiary,
   },
   error: {
     borderColor: Colors.semantic.error,
@@ -91,7 +91,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.md,
     fontSize: FontSizes.md,
-    color: Colors.neutral.charcoal,
+    color: Colors.text.primary, // White text for dark theme
   },
   iconLeft: {
     paddingLeft: Spacing.md,

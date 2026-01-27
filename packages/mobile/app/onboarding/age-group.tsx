@@ -1,134 +1,137 @@
-import { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import React, { useState } from 'react';
+import { View, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { Text } from '../../src/components/ui/Text';
-import { Button } from '../../src/components/ui/Button';
-import { Colors, Spacing } from '../../src/constants/colors';
+import { router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { Text, Button, StepProgress } from '../../src/components/ui';
+import { Colors, Spacing, BorderRadius } from '../../src/constants/colors';
+import { useAuthStore } from '../../src/store/authStore';
 
-// Gender-balanced age groups: 2 female, 2 male (alternating)
-const AGE_GROUPS = [
+const ageGroups = [
   {
-    id: 'teen',
-    label: 'Teen (10-17)',
-    gender: 'female',
-    imageUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400&h=400&fit=crop&crop=face',
-    description: 'Perfect for students',
+    id: '18-24',
+    label: '18-24',
+    description: 'Starting career & social life',
+    icon: 'school' as const,
   },
   {
-    id: 'young-adult',
-    label: 'Young Adult (18-30)',
-    gender: 'male',
-    imageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face',
-    description: 'Starting your career',
-  },
-  {
-    id: 'adult',
-    label: 'Professional (31-50)',
-    gender: 'female',
-    imageUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=400&fit=crop&crop=face',
+    id: '25-34',
+    label: '25-34',
     description: 'Growing professionally',
+    icon: 'briefcase' as const,
   },
   {
-    id: 'mature',
-    label: 'Experienced (51+)',
-    gender: 'male',
-    imageUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face',
-    description: 'Seasoned leader',
+    id: '35-44',
+    label: '35-44',
+    description: 'Leadership & management',
+    icon: 'people' as const,
+  },
+  {
+    id: '45+',
+    label: '45+',
+    description: 'Experienced professional',
+    icon: 'star' as const,
   },
 ];
 
 export default function AgeGroupScreen() {
-  const router = useRouter();
-  const [selected, setSelected] = useState<string | null>(null);
+  const [selectedAge, setSelectedAge] = useState<string | null>(null);
+  const { user, setUser } = useAuthStore();
 
   const handleContinue = () => {
-    router.push({
-      pathname: '/onboarding/goals',
-      params: { ageGroup: selected },
-    });
+    if (selectedAge && user) {
+      setUser({ ...user, ageGroup: selectedAge });
+      router.push('/onboarding/goals');
+    }
   };
 
   return (
-    <SafeAreaView style= { styles.container } >
-    <View style={ styles.progress }>
-      <View style={ styles.progressBar }>
-        <View style={ [styles.progressFill, { width: '33%' }] } />
+    <View style={styles.container}>
+      <SafeAreaView style={styles.safeArea}>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Progress indicator */}
+          <StepProgress currentStep={3} totalSteps={6} style={styles.progress} />
+
+          {/* Back button */}
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+          >
+            <Ionicons name="arrow-back" size={24} color={Colors.text.primary} />
+          </TouchableOpacity>
+
+          {/* Header */}
+          <View style={styles.header}>
+            <Text variant="h2" align="center">
+              What's your age range?
+            </Text>
+            <Text variant="body" color="secondary" align="center" style={styles.subtitle}>
+              This helps us tailor content to your life stage
+            </Text>
           </View>
-          < Text variant = "caption" color = "gray600" >
-            Step 1 of 3
-              </Text>
-              </View>
 
-              < View style = { styles.content } >
-                <Text variant="h2" style = { styles.heading } > What's your age group?</Text>
-                  < Text variant = "body" color = "gray600" style = { styles.subtitle } >
-                    This helps us personalize your learning experience
-                      </Text>
+          {/* Age group options */}
+          <View style={styles.options}>
+            {ageGroups.map((group) => (
+              <TouchableOpacity
+                key={group.id}
+                style={[
+                  styles.option,
+                  selectedAge === group.id && styles.optionSelected,
+                ]}
+                onPress={() => setSelectedAge(group.id)}
+                activeOpacity={0.8}
+              >
+                <View style={[
+                  styles.optionIcon,
+                  selectedAge === group.id && styles.optionIconSelected,
+                ]}>
+                  <Ionicons
+                    name={group.icon}
+                    size={28}
+                    color={selectedAge === group.id ? Colors.neutral.white : Colors.primary.purple}
+                  />
+                </View>
+                <View style={styles.optionText}>
+                  <Text
+                    variant="h3"
+                    color={selectedAge === group.id ? 'white' : 'primary'}
+                  >
+                    {group.label}
+                  </Text>
+                  <Text
+                    variant="bodySmall"
+                    color={selectedAge === group.id ? 'accent' : 'secondary'}
+                  >
+                    {group.description}
+                  </Text>
+                </View>
+                {selectedAge === group.id && (
+                  <View style={styles.checkmark}>
+                    <Ionicons name="checkmark" size={20} color={Colors.neutral.white} />
+                  </View>
+                )}
+              </TouchableOpacity>
+            ))}
+          </View>
+        </ScrollView>
 
-                      < View style = { styles.options } >
-                      {
-                        AGE_GROUPS.map((group) => (
-                          <TouchableOpacity
-              key= { group.id }
-              style = {
-                            [
-                            styles.optionCard,
-                            selected === group.id && styles.optionCardSelected,
-              ]}
-              onPress = {() => setSelected(group.id)}
-  activeOpacity = { 0.8}
-    >
-    <View style={
-      [
-        styles.imageContainer,
-        selected === group.id && styles.imageContainerSelected,
-      ]
-  }>
-    <Image
-                  source={ { uri: group.imageUrl } }
-  style = { styles.profileImage }
-  resizeMode = "cover"
-    />
-    </View>
-    < View style = { styles.optionTextContainer } >
-      <Text
-                  variant="body"
-  weight = "semibold"
-  color = { selected === group.id ? 'white' : 'charcoal'
-}
-                >
-  { group.label }
-  </Text>
-  < Text
-variant = "caption"
-color = { selected === group.id ? 'white' : 'gray600'}
-style = {{ opacity: selected === group.id ? 0.9 : 0.7 }}
-                >
-  { group.description }
-  </Text>
-  </View>
-{
-  selected === group.id && (
-    <View style={ styles.checkmark }>
-      <Text variant="caption" color = "white" weight = "bold" >✓</Text>
+        {/* Footer */}
+        <View style={styles.footer}>
+          <Button
+            title="Continue"
+            variant="gradient"
+            size="lg"
+            onPress={handleContinue}
+            disabled={!selectedAge}
+          />
         </View>
-              )
-}
-</TouchableOpacity>
-          ))}
-</View>
-  </View>
-
-  < View style = { styles.footer } >
-    <Button
-          title="Continue"
-onPress = { handleContinue }
-disabled = {!selected}
-size = "lg"
-  />
-  </View>
-  </SafeAreaView>
+      </SafeAreaView>
+    </View>
   );
 }
 
@@ -137,86 +140,76 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background.primary,
   },
-  progress: {
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-    alignItems: 'center',
-    gap: Spacing.xs,
-  },
-  progressBar: {
-    width: '100%',
-    height: 4,
-    backgroundColor: Colors.neutral.gray200,
-    borderRadius: 2,
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: Colors.primary.deepIndigo,
-    borderRadius: 2,
-  },
-  content: {
+  safeArea: {
     flex: 1,
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.lg,
   },
-  heading: {
-    textAlign: 'center',
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.lg,
+  },
+  progress: {
+    marginTop: Spacing.md,
+    marginBottom: Spacing.md,
+  },
+  backButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: Colors.background.secondary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Spacing.md,
+  },
+  header: {
+    marginBottom: Spacing.xl,
   },
   subtitle: {
-    marginTop: Spacing.xs,
-    marginBottom: Spacing.xl,
-    textAlign: 'center',
+    marginTop: Spacing.sm,
   },
   options: {
     gap: Spacing.md,
   },
-  optionCard: {
+  option: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.neutral.gray100,
-    borderRadius: 16,
+    backgroundColor: Colors.background.secondary,
+    borderRadius: BorderRadius.lg,
     padding: Spacing.md,
-    borderWidth: 3,
-    borderColor: 'transparent',
     gap: Spacing.md,
+    borderWidth: 2,
+    borderColor: 'transparent',
   },
-  optionCardSelected: {
-    backgroundColor: Colors.primary.deepIndigo,
-    borderColor: Colors.primary.deepTeal,
+  optionSelected: {
+    backgroundColor: Colors.primary.purple,
+    borderColor: Colors.primary.blue,
   },
-  imageContainer: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    overflow: 'hidden',
-    borderWidth: 3,
-    borderColor: Colors.neutral.gray200,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 3,
+  optionIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: BorderRadius.md,
+    backgroundColor: Colors.background.tertiary,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  imageContainerSelected: {
-    borderColor: Colors.primary.deepTeal,
+  optionIconSelected: {
+    backgroundColor: `${Colors.primary.blue}40`,
   },
-  profileImage: {
-    width: '100%',
-    height: '100%',
-  },
-  optionTextContainer: {
+  optionText: {
     flex: 1,
-    gap: 2,
   },
   checkmark: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: Colors.primary.emerald,
-    justifyContent: 'center',
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: Colors.primary.blue,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   footer: {
     padding: Spacing.lg,
+    paddingTop: 0,
   },
 });

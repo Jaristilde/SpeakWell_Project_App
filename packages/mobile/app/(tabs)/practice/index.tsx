@@ -1,10 +1,11 @@
-import { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { Text } from '../../../src/components/ui/Text';
-import { Button } from '../../../src/components/ui/Button';
-import { Colors, Spacing } from '../../../src/constants/colors';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
+import { Text, Button, Card } from '../../../src/components/ui';
+import { Colors, Spacing, BorderRadius, Shadows } from '../../../src/constants/colors';
 
 const PRACTICE_PROMPTS = [
   {
@@ -12,139 +13,306 @@ const PRACTICE_PROMPTS = [
     title: 'Self Introduction',
     description: 'Introduce yourself in 30 seconds',
     duration: 30,
+    icon: 'person' as const,
+    difficulty: 'Easy',
   },
   {
     id: '2',
     title: 'Elevator Pitch',
     description: 'Describe your work or passion project',
     duration: 60,
+    icon: 'rocket' as const,
+    difficulty: 'Medium',
   },
   {
     id: '3',
     title: 'Story Time',
     description: 'Share a memorable experience',
     duration: 90,
+    icon: 'book' as const,
+    difficulty: 'Medium',
   },
   {
     id: '4',
     title: 'Opinion Piece',
     description: 'Share your view on a topic you care about',
     duration: 120,
+    icon: 'chatbubble' as const,
+    difficulty: 'Hard',
   },
 ];
 
+const getDifficultyColor = (difficulty: string) => {
+  switch (difficulty) {
+    case 'Easy':
+      return Colors.primary.blue;
+    case 'Medium':
+      return Colors.primary.purple;
+    case 'Hard':
+      return Colors.primary.deepPurple;
+    default:
+      return Colors.primary.purple;
+  }
+};
+
 export default function PracticeScreen() {
-  const router = useRouter();
   const [selectedPrompt, setSelectedPrompt] = useState<string | null>(null);
 
+  const handleStartRecording = () => {
+    if (selectedPrompt) {
+      router.push({
+        pathname: '/(tabs)/practice/record',
+        params: { promptId: selectedPrompt },
+      });
+    }
+  };
+
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text variant="h2">Practice</Text>
-        <Text variant="body" color="gray600">
-          Choose a prompt and start recording
-        </Text>
-      </View>
-
-      <View style={styles.content}>
-        <Text variant="h3" style={styles.sectionTitle}>
-          Today's Prompts
-        </Text>
-
-        {PRACTICE_PROMPTS.map((prompt) => (
-          <TouchableOpacity
-            key={prompt.id}
-            style={[
-              styles.promptCard,
-              selectedPrompt === prompt.id && styles.promptCardSelected,
-            ]}
-            onPress={() => setSelectedPrompt(prompt.id)}
-          >
-            <View style={styles.promptHeader}>
-              <Text
-                variant="body"
-                weight="semibold"
-                color={selectedPrompt === prompt.id ? 'white' : 'charcoal'}
-              >
-                {prompt.title}
-              </Text>
-              <View style={styles.durationBadge}>
-                <Text variant="caption" color="deepIndigo" weight="semibold">
-                  {prompt.duration}s
-                </Text>
-              </View>
-            </View>
-            <Text
-              variant="bodySmall"
-              color={selectedPrompt === prompt.id ? 'gray200' : 'gray600'}
-            >
-              {prompt.description}
+    <View style={styles.container}>
+      <SafeAreaView style={styles.safeArea}>
+        {/* Header */}
+        <View style={styles.header}>
+          <View>
+            <Text variant="h2">Practice</Text>
+            <Text variant="bodySmall" color="secondary">
+              Record and improve your speaking skills
             </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+          </View>
+          <View style={styles.statsRow}>
+            <View style={styles.statItem}>
+              <Text variant="h3" color="purple">12</Text>
+              <Text variant="caption" color="muted">Recordings</Text>
+            </View>
+          </View>
+        </View>
 
-      <View style={styles.footer}>
-        <Button
-          title="Start Recording"
-          onPress={() =>
-            router.push({
-              pathname: '/(tabs)/practice/record',
-              params: { promptId: selectedPrompt },
-            })
-          }
-          disabled={!selectedPrompt}
-          size="lg"
-        />
-      </View>
-    </SafeAreaView>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Quick Tips */}
+          <Card variant="gradient" padding="md" style={styles.tipsCard}>
+            <View style={styles.tipsHeader}>
+              <Ionicons name="bulb" size={20} color={Colors.primary.purple} />
+              <Text variant="body" weight="semibold">Quick Tip</Text>
+            </View>
+            <Text variant="bodySmall" color="secondary">
+              Speak at a natural pace. It's better to speak slowly and clearly than to rush.
+            </Text>
+          </Card>
+
+          {/* Prompts Section */}
+          <View style={styles.section}>
+            <Text variant="h3" style={styles.sectionTitle}>Choose a Prompt</Text>
+            <View style={styles.promptList}>
+              {PRACTICE_PROMPTS.map((prompt) => {
+                const isSelected = selectedPrompt === prompt.id;
+                return (
+                  <TouchableOpacity
+                    key={prompt.id}
+                    style={[styles.promptCard, isSelected && styles.promptCardSelected]}
+                    onPress={() => setSelectedPrompt(prompt.id)}
+                    activeOpacity={0.8}
+                  >
+                    {isSelected && (
+                      <LinearGradient
+                        colors={Colors.gradient.primary as [string, string]}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={StyleSheet.absoluteFill}
+                      />
+                    )}
+                    <View style={[
+                      styles.promptIcon,
+                      isSelected && styles.promptIconSelected,
+                    ]}>
+                      <Ionicons
+                        name={prompt.icon}
+                        size={24}
+                        color={isSelected ? Colors.neutral.white : Colors.primary.purple}
+                      />
+                    </View>
+                    <View style={styles.promptContent}>
+                      <View style={styles.promptHeader}>
+                        <Text
+                          variant="body"
+                          weight="semibold"
+                          color={isSelected ? 'white' : 'primary'}
+                        >
+                          {prompt.title}
+                        </Text>
+                        <View style={[
+                          styles.difficultyBadge,
+                          { backgroundColor: `${getDifficultyColor(prompt.difficulty)}30` },
+                        ]}>
+                          <Text
+                            variant="caption"
+                            style={{ color: getDifficultyColor(prompt.difficulty) }}
+                            weight="semibold"
+                          >
+                            {prompt.difficulty}
+                          </Text>
+                        </View>
+                      </View>
+                      <Text
+                        variant="bodySmall"
+                        color={isSelected ? 'accent' : 'secondary'}
+                      >
+                        {prompt.description}
+                      </Text>
+                      <View style={styles.promptMeta}>
+                        <Ionicons
+                          name="time-outline"
+                          size={14}
+                          color={isSelected ? Colors.text.accent : Colors.text.muted}
+                        />
+                        <Text
+                          variant="caption"
+                          color={isSelected ? 'accent' : 'muted'}
+                        >
+                          {prompt.duration} seconds
+                        </Text>
+                      </View>
+                    </View>
+                    {isSelected && (
+                      <View style={styles.selectedCheck}>
+                        <Ionicons name="checkmark" size={16} color={Colors.neutral.white} />
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+        </ScrollView>
+
+        {/* Footer */}
+        <View style={styles.footer}>
+          <Button
+            title="Start Recording"
+            variant="gradient"
+            size="lg"
+            onPress={handleStartRecording}
+            disabled={!selectedPrompt}
+            icon={<Ionicons name="mic" size={20} color={Colors.neutral.white} />}
+          />
+        </View>
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background.secondary,
+    backgroundColor: Colors.background.primary,
+  },
+  safeArea: {
+    flex: 1,
   },
   header: {
-    padding: Spacing.lg,
-    backgroundColor: Colors.neutral.white,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+  },
+  statsRow: {
+    flexDirection: 'row',
+  },
+  statItem: {
+    alignItems: 'center',
+    backgroundColor: Colors.background.secondary,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.md,
+  },
+  scrollView: {
+    flex: 1,
   },
   content: {
-    flex: 1,
-    padding: Spacing.lg,
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.xxl,
+  },
+  tipsCard: {
+    marginBottom: Spacing.xl,
+  },
+  tipsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    marginBottom: Spacing.xs,
+  },
+  section: {
+    marginBottom: Spacing.xl,
   },
   sectionTitle: {
     marginBottom: Spacing.md,
   },
+  promptList: {
+    gap: Spacing.md,
+  },
   promptCard: {
-    backgroundColor: Colors.neutral.white,
-    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.background.secondary,
+    borderRadius: BorderRadius.lg,
     padding: Spacing.md,
-    marginBottom: Spacing.sm,
+    gap: Spacing.md,
     borderWidth: 2,
     borderColor: 'transparent',
+    overflow: 'hidden',
   },
   promptCardSelected: {
-    backgroundColor: Colors.primary.deepIndigo,
-    borderColor: Colors.primary.deepIndigo,
+    borderColor: Colors.primary.blue,
+  },
+  promptIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: BorderRadius.md,
+    backgroundColor: `${Colors.primary.purple}20`,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1,
+  },
+  promptIconSelected: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+  },
+  promptContent: {
+    flex: 1,
+    zIndex: 1,
   },
   promptHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: Spacing.xs,
   },
-  durationBadge: {
-    backgroundColor: Colors.neutral.gray100,
+  difficultyBadge: {
     paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
-    borderRadius: 4,
+    paddingVertical: 2,
+    borderRadius: BorderRadius.xs,
+  },
+  promptMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    marginTop: Spacing.xs,
+  },
+  selectedCheck: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: Colors.primary.blue,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1,
   },
   footer: {
     padding: Spacing.lg,
-    backgroundColor: Colors.neutral.white,
+    backgroundColor: Colors.background.secondary,
     borderTopWidth: 1,
-    borderTopColor: Colors.neutral.gray200,
+    borderTopColor: Colors.border.muted,
   },
 });
