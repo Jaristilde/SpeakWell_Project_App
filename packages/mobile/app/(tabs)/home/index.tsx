@@ -7,10 +7,20 @@ import { router } from 'expo-router';
 import { Text, Button, Card, ProgressBar } from '../../../src/components/ui';
 import { Colors, Spacing, BorderRadius, Shadows } from '../../../src/constants/colors';
 import { useAuthStore } from '../../../src/store/authStore';
+import { useResponsive } from '../../../src/hooks/useResponsive';
 
 export default function HomeScreen() {
   const user = useAuthStore((state) => state.user);
   const firstName = user?.fullName?.split(' ')[0] || 'Learner';
+  const { moderateScale, responsive, isTablet, isLandscape } = useResponsive();
+
+  // Responsive sizes
+  const avatarSize = moderateScale(48);
+  const statIconSize = moderateScale(40);
+  const playButtonSize = moderateScale(48);
+  const challengeIconSize = moderateScale(48);
+  const dayDotSize = moderateScale(28);
+  const quickActionIconSize = moderateScale(56);
 
   // Mock data for today's lesson
   const todayLesson = {
@@ -51,7 +61,7 @@ export default function HomeScreen() {
             >
               <LinearGradient
                 colors={Colors.gradient.primary as [string, string]}
-                style={styles.avatar}
+                style={[styles.avatar, { width: avatarSize, height: avatarSize, borderRadius: avatarSize / 2 }]}
               >
                 <Text variant="h3" color="white">
                   {firstName.charAt(0).toUpperCase()}
@@ -61,24 +71,27 @@ export default function HomeScreen() {
           </View>
 
           {/* Stats Row */}
-          <View style={styles.statsRow}>
+          <View style={[styles.statsRow, isLandscape && styles.statsRowLandscape]}>
             <StatCard
               icon="flame"
               value={challenge.streak}
               label="Day Streak"
               color={Colors.progress.streak}
+              iconSize={statIconSize}
             />
             <StatCard
               icon="book"
               value={7}
               label="Lessons"
               color={Colors.primary.blue}
+              iconSize={statIconSize}
             />
             <StatCard
               icon="time"
               value={45}
               label="Minutes"
               color={Colors.primary.purple}
+              iconSize={statIconSize}
             />
           </View>
 
@@ -124,8 +137,8 @@ export default function HomeScreen() {
                   </View>
                 </View>
                 <View style={styles.lessonAction}>
-                  <View style={styles.playButton}>
-                    <Ionicons name="play" size={24} color={Colors.primary.purple} />
+                  <View style={[styles.playButton, { width: playButtonSize, height: playButtonSize, borderRadius: playButtonSize / 2 }]}>
+                    <Ionicons name="play" size={moderateScale(24)} color={Colors.primary.purple} />
                   </View>
                 </View>
               </LinearGradient>
@@ -142,8 +155,8 @@ export default function HomeScreen() {
             </View>
             <Card variant="default" padding="lg">
               <View style={styles.challengeHeader}>
-                <View style={styles.challengeIcon}>
-                  <Ionicons name="trophy" size={24} color={Colors.progress.streak} />
+                <View style={[styles.challengeIcon, { width: challengeIconSize, height: challengeIconSize }]}>
+                  <Ionicons name="trophy" size={moderateScale(24)} color={Colors.progress.streak} />
                 </View>
                 <View style={styles.challengeInfo}>
                   <Text variant="body" weight="semibold">{challenge.name}</Text>
@@ -169,12 +182,13 @@ export default function HomeScreen() {
                     key={i}
                     style={[
                       styles.dayDot,
+                      { width: dayDotSize, height: dayDotSize, borderRadius: dayDotSize / 2 },
                       i < challenge.currentDay && styles.dayDotComplete,
                       i === challenge.currentDay - 1 && styles.dayDotCurrent,
                     ]}
                   >
                     {i < challenge.currentDay && (
-                      <Ionicons name="checkmark" size={12} color={Colors.neutral.white} />
+                      <Ionicons name="checkmark" size={moderateScale(12)} color={Colors.neutral.white} />
                     )}
                   </View>
                 ))}
@@ -185,18 +199,20 @@ export default function HomeScreen() {
           {/* Quick Actions */}
           <View style={styles.section}>
             <Text variant="h3" style={styles.sectionTitle}>Quick Actions</Text>
-            <View style={styles.quickActions}>
+            <View style={[styles.quickActions, isLandscape && styles.quickActionsLandscape]}>
               <QuickActionCard
                 icon="mic"
                 title="Practice"
                 subtitle="Record & improve"
                 onPress={() => router.push('/(tabs)/practice')}
+                iconSize={quickActionIconSize}
               />
               <QuickActionCard
                 icon="analytics"
                 title="Progress"
                 subtitle="View stats"
                 onPress={() => router.push('/(tabs)/profile')}
+                iconSize={quickActionIconSize}
               />
             </View>
           </View>
@@ -211,12 +227,13 @@ interface StatCardProps {
   value: number;
   label: string;
   color: string;
+  iconSize?: number;
 }
 
-const StatCard: React.FC<StatCardProps> = ({ icon, value, label, color }) => (
+const StatCard: React.FC<StatCardProps> = ({ icon, value, label, color, iconSize = 40 }) => (
   <View style={styles.statCard}>
-    <View style={[styles.statIcon, { backgroundColor: `${color}20` }]}>
-      <Ionicons name={icon} size={20} color={color} />
+    <View style={[styles.statIcon, { backgroundColor: `${color}20`, width: iconSize, height: iconSize, borderRadius: iconSize / 2 }]}>
+      <Ionicons name={icon} size={iconSize * 0.5} color={color} />
     </View>
     <Text variant="h3">{value}</Text>
     <Text variant="caption" color="muted">{label}</Text>
@@ -228,6 +245,7 @@ interface QuickActionCardProps {
   title: string;
   subtitle: string;
   onPress: () => void;
+  iconSize?: number;
 }
 
 const QuickActionCard: React.FC<QuickActionCardProps> = ({
@@ -235,10 +253,11 @@ const QuickActionCard: React.FC<QuickActionCardProps> = ({
   title,
   subtitle,
   onPress,
+  iconSize = 56,
 }) => (
   <TouchableOpacity style={styles.quickActionCard} onPress={onPress} activeOpacity={0.8}>
-    <View style={styles.quickActionIcon}>
-      <Ionicons name={icon} size={24} color={Colors.primary.purple} />
+    <View style={[styles.quickActionIcon, { width: iconSize, height: iconSize, borderRadius: iconSize / 2 }]}>
+      <Ionicons name={icon} size={iconSize * 0.43} color={Colors.primary.purple} />
     </View>
     <Text variant="body" weight="semibold">{title}</Text>
     <Text variant="caption" color="muted">{subtitle}</Text>
@@ -271,9 +290,6 @@ const styles = StyleSheet.create({
     ...Shadows.md,
   },
   avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -281,6 +297,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: Spacing.md,
     marginBottom: Spacing.xl,
+  },
+  statsRowLandscape: {
+    maxWidth: '80%',
+    alignSelf: 'center',
   },
   statCard: {
     flex: 1,
@@ -291,9 +311,6 @@ const styles = StyleSheet.create({
     gap: Spacing.xs,
   },
   statIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -348,9 +365,6 @@ const styles = StyleSheet.create({
     marginLeft: Spacing.md,
   },
   playButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
     backgroundColor: Colors.neutral.white,
     alignItems: 'center',
     justifyContent: 'center',
@@ -362,8 +376,6 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   challengeIcon: {
-    width: 48,
-    height: 48,
     borderRadius: BorderRadius.md,
     backgroundColor: `${Colors.progress.streak}20`,
     alignItems: 'center',
@@ -390,9 +402,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   dayDot: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
     backgroundColor: Colors.progress.track,
     alignItems: 'center',
     justifyContent: 'center',
@@ -408,6 +417,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: Spacing.md,
   },
+  quickActionsLandscape: {
+    maxWidth: '60%',
+    alignSelf: 'center',
+  },
   quickActionCard: {
     flex: 1,
     backgroundColor: Colors.background.secondary,
@@ -417,9 +430,6 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   quickActionIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
     backgroundColor: `${Colors.primary.purple}20`,
     alignItems: 'center',
     justifyContent: 'center',

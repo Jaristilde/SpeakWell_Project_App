@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Audio } from 'expo-av';
 import { Text, Button, Card } from '../../../src/components/ui';
 import { Colors, Spacing, BorderRadius, Shadows } from '../../../src/constants/colors';
+import { useResponsive } from '../../../src/hooks/useResponsive';
 
 const PRACTICE_PROMPTS: Record<string, { title: string; description: string; duration: number }> = {
   '1': { title: 'Self Introduction', description: 'Introduce yourself in 30 seconds', duration: 30 },
@@ -24,8 +25,18 @@ export default function RecordScreen() {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const waveformAnims = useRef([...Array(20)].map(() => new Animated.Value(0.3))).current;
+  const { moderateScale, fontScale, isTablet } = useResponsive();
 
   const prompt = PRACTICE_PROMPTS[promptId || '1'] || PRACTICE_PROMPTS['1'];
+
+  // Responsive sizes
+  const timerFontSize = fontScale(72);
+  const recordButtonOuter = moderateScale(88);
+  const recordButtonInner = moderateScale(72);
+  const cancelButtonSize = moderateScale(44);
+  const waveformHeight = moderateScale(60);
+  const waveformBarHeight = moderateScale(40);
+  const permissionIconSize = moderateScale(80);
 
   useEffect(() => {
     requestPermissions();
@@ -144,8 +155,8 @@ export default function RecordScreen() {
       <View style={styles.container}>
         <SafeAreaView style={styles.safeArea}>
           <View style={styles.permissionContainer}>
-            <View style={styles.permissionIcon}>
-              <Ionicons name="mic-off" size={40} color={Colors.primary.purple} />
+            <View style={[styles.permissionIcon, { width: permissionIconSize, height: permissionIconSize, borderRadius: permissionIconSize / 2 }]}>
+              <Ionicons name="mic-off" size={moderateScale(40)} color={Colors.primary.purple} />
             </View>
             <Text variant="h3" align="center">Microphone Access Required</Text>
             <Text variant="body" color="secondary" align="center" style={styles.permissionText}>
@@ -164,11 +175,14 @@ export default function RecordScreen() {
       <SafeAreaView style={styles.safeArea}>
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
-            <Ionicons name="close" size={24} color={Colors.text.primary} />
+          <TouchableOpacity
+            style={[styles.cancelButton, { width: cancelButtonSize, height: cancelButtonSize, borderRadius: cancelButtonSize / 2 }]}
+            onPress={handleCancel}
+          >
+            <Ionicons name="close" size={moderateScale(24)} color={Colors.text.primary} />
           </TouchableOpacity>
           <Text variant="body" weight="semibold">Recording</Text>
-          <View style={{ width: 44 }} />
+          <View style={{ width: cancelButtonSize }} />
         </View>
 
         <View style={styles.content}>
@@ -186,7 +200,7 @@ export default function RecordScreen() {
                 <View style={styles.recordingDot} />
               </Animated.View>
             )}
-            <Text variant="display" style={styles.timerText}>{formatTime(recordingTime)}</Text>
+            <Text variant="display" style={[styles.timerText, { fontSize: timerFontSize }]}>{formatTime(recordingTime)}</Text>
             <Text variant="bodySmall" color="muted">
               {isRecording ? 'Recording...' : 'Ready to record'}
             </Text>
@@ -194,13 +208,13 @@ export default function RecordScreen() {
 
           {/* Waveform */}
           {isRecording && (
-            <View style={styles.waveformContainer}>
+            <View style={[styles.waveformContainer, { height: waveformHeight }]}>
               {waveformAnims.map((anim, i) => (
                 <Animated.View
                   key={i}
                   style={[
                     styles.waveformBar,
-                    { transform: [{ scaleY: anim }] },
+                    { height: waveformBarHeight, transform: [{ scaleY: anim }] },
                   ]}
                 />
               ))}
@@ -217,13 +231,13 @@ export default function RecordScreen() {
           >
             <LinearGradient
               colors={isRecording ? [Colors.semantic.error, '#DC2626'] : Colors.gradient.primary as [string, string]}
-              style={styles.recordButtonOuter}
+              style={[styles.recordButtonOuter, { width: recordButtonOuter, height: recordButtonOuter, borderRadius: recordButtonOuter / 2 }]}
             >
-              <View style={[styles.recordButtonInner, isRecording && styles.recordButtonInnerRecording]}>
+              <View style={[styles.recordButtonInner, { width: recordButtonInner, height: recordButtonInner, borderRadius: recordButtonInner / 2 }, isRecording && styles.recordButtonInnerRecording]}>
                 {isRecording ? (
-                  <Ionicons name="stop" size={32} color={Colors.neutral.white} />
+                  <Ionicons name="stop" size={moderateScale(32)} color={Colors.neutral.white} />
                 ) : (
-                  <Ionicons name="mic" size={32} color={Colors.neutral.white} />
+                  <Ionicons name="mic" size={moderateScale(32)} color={Colors.neutral.white} />
                 )}
               </View>
             </LinearGradient>
@@ -253,9 +267,6 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.md,
   },
   cancelButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
     backgroundColor: Colors.background.secondary,
     alignItems: 'center',
     justifyContent: 'center',
@@ -294,7 +305,6 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.semantic.error,
   },
   timerText: {
-    fontSize: 72,
     fontWeight: '200',
     color: Colors.text.primary,
     fontVariant: ['tabular-nums'],
@@ -303,12 +313,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    height: 60,
     gap: 4,
   },
   waveformBar: {
     width: 4,
-    height: 40,
     backgroundColor: Colors.primary.purple,
     borderRadius: 2,
   },
@@ -321,16 +329,10 @@ const styles = StyleSheet.create({
     ...Shadows.glow,
   },
   recordButtonOuter: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
     alignItems: 'center',
     justifyContent: 'center',
   },
   recordButtonInner: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
     backgroundColor: 'rgba(255,255,255,0.2)',
     alignItems: 'center',
     justifyContent: 'center',
@@ -349,9 +351,6 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
   },
   permissionIcon: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
     backgroundColor: `${Colors.primary.purple}20`,
     justifyContent: 'center',
     alignItems: 'center',

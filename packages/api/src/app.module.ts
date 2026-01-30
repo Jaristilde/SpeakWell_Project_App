@@ -11,6 +11,8 @@ import { RecordingsModule } from './recordings/recordings.module';
 import { ProgressModule } from './progress/progress.module';
 import { CmsModule } from './cms/cms.module';
 import { LearningPathModule } from './learning-path/learning-path.module';
+import { AiModule } from './ai/ai.module';
+import { FeedbackModule } from './feedback/feedback.module';
 import configuration from './config/configuration';
 
 @Module({
@@ -28,6 +30,8 @@ import configuration from './config/configuration';
     ProgressModule,
     CmsModule,
     LearningPathModule,
+    AiModule,
+    FeedbackModule,
   ],
   controllers: [AppController],
   providers: [AppService],
