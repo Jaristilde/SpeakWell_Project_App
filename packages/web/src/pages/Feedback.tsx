@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Play, Pause, RotateCcw, CheckCircle, AlertTriangle, TrendingUp, Clock, Volume2 } from 'lucide-react';
 
 interface FeedbackData {
@@ -50,7 +50,6 @@ const generateMockFeedback = (): FeedbackData => {
 
 export default function Feedback() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const audioRef = useRef<HTMLAudioElement>(null);
 
   const [isLoading, setIsLoading] = useState(true);
@@ -100,12 +99,6 @@ export default function Feedback() {
     if (score >= 85) return 'text-green-500';
     if (score >= 70) return 'text-[#0B4CDC]';
     return 'text-amber-500';
-  };
-
-  const getScoreBg = (score: number) => {
-    if (score >= 85) return 'bg-green-500';
-    if (score >= 70) return 'bg-[#0B4CDC]';
-    return 'bg-amber-500';
   };
 
   const getPaceInfo = (pace: string) => {
